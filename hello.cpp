@@ -1,77 +1,66 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <HX711.h>
-#include <Wire.h>               // Include Wire library for I2C communication
-#include <LiquidCrystal_I2C.h>  // Include LiquidCrystal_I2C library
+#include <Wire.h>              
+#include <LiquidCrystal_I2C.h>
 
-// Load cell pins
-#define DOUT 16  // Data pin (DT)
-#define CLK 17   // Clock pin (SCK)
+#define DOUT 16 
+#define CLK 17  
 
-// Replace with your WiFi credentials
 const char* ssid = "";
 const char* password = "";
 
 const String serverUrl = "";
 
-// HX711 load cell initialization
 HX711 scale;
 
-// Calibration factor (adjust this value after calibration)
-float calibrationFactor = 502;  // Replace with your calibrated factor
+float calibrationFactor = 502; 
 
-// LCD Initialization (Assuming address 0x3f, 16x2 LCD)
-LiquidCrystal_I2C lcd(0x3f, 16, 2);  // 16 columns and 2 rows LCD
+LiquidCrystal_I2C lcd(0x3f, 16, 2);  
 
 void setup() {
   Serial.begin(115200);
 
-  // Initialize the load cell
   scale.begin(DOUT, CLK);
-  scale.set_scale(calibrationFactor);  // Set initial calibration factor
-  scale.tare();                        // Set the initial weight to zero
+  scale.set_scale(calibrationFactor);  
+  scale.tare();                        
 
   Serial.println("Load cell initialized. Tare complete.");
   Serial.println("Place a known weight to calibrate, or use the current settings.");
 
-  // Initialize WiFi connection
   connectToWiFi();
 
-  // Initialize LCD
-  lcd.init();       // Initialize the LCD
-  lcd.backlight();  // Turn on the backlight
-  lcd.clear();      // Clear any old text from the LCD
+  lcd.init();       
+  lcd.backlight();  
+  lcd.clear();     
 }
 
 void loop() {
   float weight = scale.get_units(10);
-  if (weight <= 5) weight = 0;  // Zero out small weight readings
+  if (weight <= 5) weight = 0;  
 
   Serial.println(weight);
 
-  // Clear the previous weight on the LCD line
-  lcd.setCursor(0, 0);       // Set cursor to the first row, first column
-  lcd.print("Wt:        ");  // Clear the line by printing extra spaces
+  lcd.setCursor(0, 0);       
+  lcd.print("Wt:        ");  
 
-  // Print the new weight on the LCD
-  lcd.setCursor(0, 0);   // Set cursor to first row, first column
-  lcd.print("Wt: ");     // Print label "Wt: "
-  lcd.print(weight, 2);  // Print the weight with 2 decimal places
-  lcd.print(" g");       // Print " g" to denote grams
+  lcd.setCursor(0, 0);   
+  lcd.print("Wt: ");     
+  lcd.print(weight, 2);  
+  lcd.print(" g");      
 
-  // Send the weight to the backend
   if (weight != 0) {
     sendToBackend(weight);
   }
 
-  delay(1000);  // Add a small delay to reduce flickering on the LCD
+  delay(1000); 
 }
 
 void connectToWiFi() {
   Serial.print("Connecting to WiFi");
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);  // Small delay to check for connection
+    delay(1000); 
     Serial.print(".");
   }
   Serial.println("\nConnected to WiFi!");
